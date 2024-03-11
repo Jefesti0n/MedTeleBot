@@ -16,7 +16,9 @@ other_pain = {'Боль в области спины': 'back', 'Боль в об
 # Временно опросники по ноге и руке одинаковы, как и выводы.
 # Позднее требуется либо объединить, либо дополнить функционал.
 limb_pain_survey = {'Боль в руке': 'arm', 'Боль в ноге': 'leg'}
+
 arm_pain_survey = {'Боль в одном/нескольких суставах': 'joint', 'Другое': 'other_limb_pain'}
 leg_pain_survey = {'Боль в одном/нескольких суставах': 'joint', 'Другое': 'other_limb_pain'}
+
 joint_injury_survey = {'Да':'traumatic joint pain', 'Нет':'no injury'}
 other_limb_injury_survey = {'Да':'traumatic limb pain', 'Нет':'no limb injury'}
