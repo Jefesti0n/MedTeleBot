@@ -33,16 +33,23 @@ def symptom_of_final_order(call, **kwargs):
     bot.send_message(call.message.chat.id, 'У вас есть другие жалобы?', reply_markup=markup)
 
 
+sex_dict = {'Мужской': 'male', 'Женский': 'female'}
+
+
 @bot.message_handler(commands=['start'])
 def start_survey(message):
-    standart_InlineKeyboard_Markup(primary_survey)
-    bot.send_message(message.chat.id, 'Уточните симптоматику', reply_markup=markup)
+    standart_InlineKeyboard_Markup(sex_dict)
+    bot.send_message(message.chat.id, 'Выберите ваш пол', reply_markup=markup)
+    print(message.chat.id)
 
 
-@bot.callback_query_handler(func=lambda call: call.data == 'pain')
+@bot.callback_query_handler(func=lambda call: call.data in ('male', 'female'))
 def pain(call):
+    global user_sex
+    user_sex = call.data
     standart_InlineKeyboard_Markup(pain_survey)
     bot.send_message(call.from_user.id, 'Уточните симптоматику', reply_markup=markup)
+    print(call.from_user.id, user_sex)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == 'abdominal_pain')
@@ -65,7 +72,7 @@ def lower_abdominal_pain(call):
 
 @bot.callback_query_handler(func=lambda call: call.data == 'chest_pain')
 def abdominal_pain(call):
-    standart_InlineKeyboard_Markup(symptoms_data.chest_pain_survey)
+    standart_InlineKeyboard_Markup(chest_pain_survey)
     bot.send_message(call.from_user.id, 'Уточните локализацию', reply_markup=markup)
 
 
@@ -93,8 +100,13 @@ def parts_of_the_head(call):
 
 @bot.callback_query_handler(func=lambda call: call.data == 'no')
 def do_final_score(call):
-    sort_specialists_list = sorted(specialists_dict.items(), key=lambda x: x[1],
-                                   reverse=True)
+    if user_sex == 'male':
+        del specialists_dict['Гинеколога']
+        sort_specialists_list = sorted(specialists_dict.items(), key=lambda x: x[1],
+                                       reverse=True)
+    else:
+        sort_specialists_list = sorted(specialists_dict.items(), key=lambda x: x[1],
+                                       reverse=True)
     print(sort_specialists_list)  # Тестирование.
     bot.send_message(call.message.chat.id,
                      f'Вам стоит посетить {sort_specialists_list[0][0]}, также, возможно, {sort_specialists_list[1][0]}')
