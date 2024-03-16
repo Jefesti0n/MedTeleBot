@@ -33,29 +33,45 @@ def symptom_of_final_order(call, **kwargs):
     bot.send_message(call.message.chat.id, 'У вас есть другие жалобы?', reply_markup=markup)
 
 
-sex_dict = {'Мужской': 'male', 'Женский': 'female'}
+def del_survey(call):
+    bot.edit_message_reply_markup(chat_id=call.message.chat.id, message_id=call.message.message_id, reply_markup=None)
+
+
+def scoring_result(array):
+    biggest_score_docs = []
+    other_docs = []
+    for i in array:
+        if i[1] == array[0][1]:
+            biggest_score_docs.append(i[0])
+        elif i[1] > 0:
+            other_docs.append(i[0])
+    result = f'В первую очередь вам стоит посетить {', '.join(biggest_score_docs)}.'
+    if other_docs:
+        result += f'Также можно задуматься о посещении {', '.join(other_docs)}'
+
+    return result
 
 
 @bot.message_handler(commands=['start'])
 def start_survey(message):
-    standart_InlineKeyboard_Markup(sex_dict)
-    bot.send_message(message.chat.id, 'Выберите ваш пол', reply_markup=markup)
-    print(message.chat.id)
+    global sent_message
+
+    standart_InlineKeyboard_Markup(primary_survey)
+    sent_message = bot.send_message(message.chat.id, 'Уточните симптоматику', reply_markup=markup)
 
 
-@bot.callback_query_handler(func=lambda call: call.data in ('male', 'female'))
+@bot.callback_query_handler(func=lambda call: call.data == 'pain')
 def pain(call):
-    global user_sex
-    user_sex = call.data
     standart_InlineKeyboard_Markup(pain_survey)
     bot.send_message(call.from_user.id, 'Уточните симптоматику', reply_markup=markup)
-    print(call.from_user.id, user_sex)
+    del_survey(call)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == 'abdominal_pain')
 def abdominal_pain(call):
     standart_InlineKeyboard_Markup(abdominal_pain_survey)
     bot.send_message(call.from_user.id, 'Уточните локализацию', reply_markup=markup)
+    del_survey(call)
 
 
 @bot.callback_query_handler(func=lambda
@@ -63,59 +79,64 @@ def abdominal_pain(call):
               or call.data == 'periumbilical' or call.data == 'left_flank' or call.data == 'right_flank')
 def hypochondrium_pain(call):
     symptom_of_final_order(call, Гастроэнтеролога=1, Хирурга=1)
+    del_survey(call)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == 'lower_abdominal_pain')
 def lower_abdominal_pain(call):
     symptom_of_final_order(call, Хирурга=1, Уролога=1, Гинеколога=1)
+    del_survey(call)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == 'chest_pain')
 def abdominal_pain(call):
-    standart_InlineKeyboard_Markup(chest_pain_survey)
+    standart_InlineKeyboard_Markup(symptoms_data.chest_pain_survey)
     bot.send_message(call.from_user.id, 'Уточните локализацию', reply_markup=markup)
+    del_survey(call)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == 'heart')
 def lower_abdominal_pain(call):
     symptom_of_final_order(call, Кардиолога=2, Терапевта=1)
+    del_survey(call)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == 'right_chest' or call.data == 'lower_chest')
 def lower_abdominal_pain(call):
     symptom_of_final_order(call, Терапевта=1)
+    del_survey(call)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == 'headache')
 def headache(call):
     standart_InlineKeyboard_Markup(headache_pain_survey)
     bot.send_message(call.from_user.id, 'Уточните локализацию', reply_markup=markup)
+    del_survey(call)
 
 
 @bot.callback_query_handler(
     func=lambda call: call.data == 'forehead' or call.data == 'occipit' or call.data == 'temporal')
 def parts_of_the_head(call):
     symptom_of_final_order(call, Терапевта=1, Невролога=1)
+    del_survey(call)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == 'no')
 def do_final_score(call):
-    if user_sex == 'male':
-        del specialists_dict['Гинеколога']
-        sort_specialists_list = sorted(specialists_dict.items(), key=lambda x: x[1],
-                                       reverse=True)
-    else:
-        sort_specialists_list = sorted(specialists_dict.items(), key=lambda x: x[1],
-                                       reverse=True)
+    sort_specialists_list = sorted(specialists_dict.items(), key=lambda x: x[1],
+                                   reverse=True)
     print(sort_specialists_list)  # Тестирование.
-    bot.send_message(call.message.chat.id,
-                     f'Вам стоит посетить {sort_specialists_list[0][0]}, также, возможно, {sort_specialists_list[1][0]}')
+    bot.send_message(call.message.chat.id, scoring_result(sort_specialists_list)
+                     )
+
+    del_survey(call)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == 'yes')
 def go_back_to_start_survey(call):
     standart_InlineKeyboard_Markup(primary_survey)
     bot.send_message(call.from_user.id, 'Уточните симптоматику', reply_markup=markup)
+    del_survey(call)
 
 
 bot.polling(none_stop=True)
